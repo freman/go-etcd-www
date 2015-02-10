@@ -1,0 +1,19 @@
+{
+	"ImportPath": "_/Users/shannon/AeroFS/Development/etcdd",
+	"GoVersion": "go1.4",
+	"Packages": [
+		"github.com/coreos/go-etcd/etcd"
+	],
+	"Deps": [
+		{
+			"ImportPath": "github.com/coreos/etcd/etcdserver/etcdhttp/httptypes",
+			"Comment": "v2.0.0-76-g84dac75",
+			"Rev": "84dac75ed560216e54f40f3a377b0ba5d8340784"
+		},
+		{
+			"ImportPath": "github.com/coreos/etcd/pkg/types",
+			"Comment": "v2.0.0-76-g84dac75",
+			"Rev": "84dac75ed560216e54f40f3a377b0ba5d8340784"
+		}
+	]
+}
