@@ -8,7 +8,12 @@ import (
 	"os"
 )
 
-var baseTemplate = template.Must(template.New("base").Funcs(templateFunctions).Parse(baseTemplateHTML))
+var templates = template.Must(template.New("base").Funcs(templateFunctions).Parse(baseTemplateHTML))
+
+func initTempalates() {
+	templates = template.Must(templates.New("folder").Parse(folderTemplateHTML))
+	templates = template.Must(templates.New("entry").Parse(entryTemplateHTML))
+}
 
 func getPort() string {
 	var port = os.Getenv("PORT")
@@ -30,6 +35,7 @@ func getEtcd() []string {
 }
 
 func main() {
+	initTempalates();
 	http.HandleFunc("/", queryEtcd)
 
 	log.Println("Starting...")
@@ -41,16 +47,19 @@ func main() {
 }
 
 func queryEtcd (w http.ResponseWriter, r *http.Request) {
-		e := etcd.NewClient(getEtcd())
-		result, err := e.Get(r.URL.Path, true, true)
-		if err != nil {
-			http.Error(w, err.Error(), http.StatusInternalServerError)
-			return;
-		}
+	e := etcd.NewClient(getEtcd())
+	result, err := e.Get(r.URL.Path, true, false)
 
-        err = baseTemplate.Execute(w, result)
-        if err != nil {
-        	http.Error(w, err.Error(), http.StatusInternalServerError)
-        	return;
-        }
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return;
+	}
+
+	log.Printf("%#v", result.Node.Nodes[0]);
+
+	err = templates.ExecuteTemplate(w, "base", result)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return;
+	}
 }
