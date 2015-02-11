@@ -1,65 +1,57 @@
 package main
 
 import (
-	"github.com/coreos/go-etcd/etcd"
-	"log"
-	"html/template"
-	"net/http"
 	"os"
+	"log"
+	"flag"
+	"strings"
+	"net/http"
+	"html/template"
+	"github.com/coreos/go-etcd/etcd"
 )
 
+var etcdPeers = newFlagStrs([]string{"http://localhost:4001"})
+var listen = ":4747"
+
 var templates = template.Must(template.New("base").Funcs(templateFunctions).Parse(baseTemplateHTML))
-
-func initTempalates() {
-	templates = template.Must(templates.New("folder").Parse(folderTemplateHTML))
-	templates = template.Must(templates.New("entry").Parse(entryTemplateHTML))
-}
-
-func getPort() string {
-	var port = os.Getenv("PORT")
-	if port == "" {
-		port = "4747"
-		log.Println("INFO: No PORT environment variable set, using default " + port)
-	}
-	return ":" + port
-}
-
-func getEtcd() []string {
-	var etcd = os.Getenv("ETCD_PEERS")
-	if etcd == "" {
-		etcd = "http://localhost:4001"
-		log.Println("INFO: No ETCD_PEERS environment variable set, using default " + etcd)
-	}
-
-	return []string{etcd}
-}
-
-func main() {
-	initTempalates();
-	http.HandleFunc("/", queryEtcd)
-
-	log.Println("Starting...")
-
-	err := http.ListenAndServe(getPort(), nil)
-	if err != nil {
-		log.Fatal(err)
-	}
-}
+var etcdClient *etcd.Client
 
 func queryEtcd (w http.ResponseWriter, r *http.Request) {
-	e := etcd.NewClient(getEtcd())
-	result, err := e.Get(r.URL.Path, true, false)
+	result, err := etcdClient.Get(r.URL.Path, true, false)
 
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return;
+		return
 	}
-
-	log.Printf("%#v", result.Node.Nodes[0]);
 
 	err = templates.ExecuteTemplate(w, "base", result)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return;
+		return
+	}
+}
+
+func init() {
+	if envpeers := os.Getenv("ETCD_PEERS"); envpeers != "" {
+		etcdPeers = newFlagStrs(strings.Split(envpeers, ","))
+	}
+
+	if envlisten := os.Getenv("LISTEN"); envlisten != "" {
+		listen = envlisten
+	}
+
+	flag.Var(etcdPeers, "etcd-peer", "etcd peers, repeat to list more than one, alternatively env ETCD_PEERS")
+	flag.StringVar(&listen, "port", listen, "port to listen on")
+	flag.Parse()
+
+	etcdClient = etcd.NewClient(etcdPeers.Values)
+}
+
+func main() {
+	http.HandleFunc("/", queryEtcd)
+
+	err := http.ListenAndServe(listen, nil)
+	if err != nil {
+		log.Fatal(err)
 	}
 }
