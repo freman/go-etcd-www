@@ -20,7 +20,7 @@ var templateFunctions = template.FuncMap{
 		return components
 	},
 	"hasParent" : func (r *etcd.Response) bool {
-		parent := path.Dir(r.Node.Key);
+		parent := path.Dir(r.Node.Key)
 		return parent != "."
 	},
 	"version"   : func () string {
@@ -58,14 +58,20 @@ const baseTemplateHTML = `
 {{ if .Node.Key }}
 
 			<div id="properties" style="margin-bottom: 20px;">
+				<div>
+{{ if .Node.Dir }}					<a class="btn btn-default btn-xs" href="?a=file"><span class="glyphicon glyphicon-file"></span> Create Node</a>
+					<a class="btn btn-default btn-xs" href="?a=dir"><span class="glyphicon glyphicon-folder-close"></span> Create Directory</a>{{ else }}
+					<a class="btn btn-default btn-xs" href="?a=edit"><span class="glyphicon glyphicon-pencil"></span> Edit Node</a>{{ end }}
+					<a class="btn btn-danger btn-xs" href="?a=delete"><span class="glyphicon glyphicon-trash"></span> Delete</a>
+				</div>
 				<div class="row">
 					<div class="col-md-3">Key<span style="float: right">=</span></div>
 					<div class="col-md-9">{{ .Node.Key }}</div>
 				</div>
-				<div class="row">
+{{ if not .Node.Dir }}				<div class="row">
 					<div class="col-md-3">Value<span style="float: right">=</span></div>
 					<div class="col-md-9">{{ .Node.Value }}</div>
-				</div>
+				</div>{{ end }}
 				<div class="row">
 					<div class="col-md-3">Expiration<span style="float: right">=</span></div>
 					<div class="col-md-9">{{ .Node.Expiration }}</div>
