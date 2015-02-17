@@ -35,7 +35,7 @@ func httpHandle (w http.ResponseWriter, r *http.Request) {
 	if post {
 		r.ParseForm();
 	}
-// r.PostForm
+
 	action := "view"
 	switch r.URL.Query().Get("a") {
 		case "createDirectory":
@@ -67,6 +67,7 @@ func httpHandle (w http.ResponseWriter, r *http.Request) {
 				} else {
 					http.Redirect(w, r, result.Node.Key, 303)
 				}
+				return
 			}
 			action = "delete"
 	}
