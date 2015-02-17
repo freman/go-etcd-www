@@ -16,7 +16,13 @@ var listen = ":4747"
 var templates = template.Must(template.New("base").Funcs(templateFunctions).Parse(baseTemplateHTML))
 var etcdClient *etcd.Client
 
-func queryEtcd (w http.ResponseWriter, r *http.Request) {
+type requestData struct {
+	Etcd *etcd.Response
+	Action string
+	ReadOnly bool
+}
+
+func httpHandle (w http.ResponseWriter, r *http.Request) {
 	result, err := etcdClient.Get(r.URL.Path, true, false)
 
 	if err != nil {
@@ -24,7 +30,20 @@ func queryEtcd (w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	err = templates.ExecuteTemplate(w, "base", result)
+	action := "view"
+	switch r.URL.Query().Get("a") {
+		case "createDirectory":
+			action = "createDirectory"
+		case "createValue":
+			action = "createValue"
+		case "editValue":
+			action = "editValue"
+		case "delete":
+			action = "delete"
+	}
+
+	err = templates.ExecuteTemplate(w, "base", requestData{result, action, false})
+
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
@@ -48,7 +67,7 @@ func init() {
 }
 
 func main() {
-	http.HandleFunc("/", queryEtcd)
+	http.HandleFunc("/", httpHandle)
 
 	err := http.ListenAndServe(listen, nil)
 	if err != nil {
