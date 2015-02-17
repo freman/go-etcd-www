@@ -150,8 +150,7 @@ const baseTemplateHTML = `
 			<form method="post">
 				<div class="form-group">
 					<label for="valueValue">Value Value</label>
-					<input type="hidden" name="oldValue" id="oldValue" value="{{ .Etcd.Node.Value }}" placeholder="Enter a value">
-					<input type="text" class="form-control" name="newValue" id="newValue" value="{{ .Etcd.Node.Value }}" placeholder="Enter a value">
+					<input type="text" class="form-control" name="valueValue" id="valueValue" value="{{ .Etcd.Node.Value }}" placeholder="Enter a value">
 				</div>
 				<button type="submit" class="btn btn-default">Save</button>
 			</form>

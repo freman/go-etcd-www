@@ -4,6 +4,7 @@ import (
 	"os"
 	"log"
 	"flag"
+	"path"
 	"strings"
 	"net/http"
 	"html/template"
@@ -30,15 +31,43 @@ func httpHandle (w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	post := r.Method == "POST"
+	if post {
+		r.ParseForm();
+	}
+// r.PostForm
 	action := "view"
 	switch r.URL.Query().Get("a") {
 		case "createDirectory":
+			if post && r.PostForm.Get("dirName") != "" {
+				etcdClient.CreateDir(path.Join(result.Node.Key, r.PostForm.Get("dirName")), 0)
+				http.Redirect(w, r, result.Node.Key, 303)
+				return
+			}
 			action = "createDirectory"
 		case "createValue":
+			if post && r.PostForm.Get("valueName") != "" && r.PostForm.Get("valueValue") != "" {
+				etcdClient.Create(path.Join(result.Node.Key, r.PostForm.Get("valueName")), r.PostForm.Get("valueValue"), 0)
+				http.Redirect(w, r, result.Node.Key, 303)
+				return
+			}
 			action = "createValue"
 		case "editValue":
+			if post && r.PostForm.Get("valueValue") != "" {
+				etcdClient.Update(result.Node.Key, r.PostForm.Get("valueValue"), 0)
+				http.Redirect(w, r, result.Node.Key, 303)
+				return
+			}
 			action = "editValue"
 		case "delete":
+			if post && r.PostForm.Get("confirm") != "" {
+				if r.PostForm.Get("confirm") == "Delete" {
+					etcdClient.Delete(result.Node.Key, true)
+					http.Redirect(w, r, path.Dir(result.Node.Key), 303)
+				} else {
+					http.Redirect(w, r, result.Node.Key, 303)
+				}
+			}
 			action = "delete"
 	}
 
